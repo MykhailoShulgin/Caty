@@ -1,7 +1,7 @@
 import pygame
 import os
 import time
-
+sd
 pygame.init()
 
 clock = pygame.time.Clock()
@@ -9,6 +9,7 @@ clock = pygame.time.Clock()
 display = pygame.display.set_mode((600, 600))
 
 geroy = pygame.Rect(65, 65, 29, 22)
+portal_rect = pygame.Rect(400, 400, 40, 40)
 
 go_right = go_left = go_up = go_down = False
 
@@ -33,6 +34,8 @@ textures_images = {
     15: pygame.image.load(dir_path + "/all_textures/stone.png")
 }
 
+portal_texture = pygame.image.load(dir_path + "/all_textures/portal.png")
+teleport_back_image = pygame.image.load(dir_path + "/all_textures/portal.png")  # Додаємо сюди
 
 hero = pygame.image.load(dir_path + "/all_textures/wicked_cat_right.png")
 
@@ -74,43 +77,35 @@ cafe_textures = [
     [15,15,15,15,15,15,15,15,15,15,15,15,15,15,15],
     ]
 
-# Змінна для збереження мапи
-textures = initial_textures  # Початкова мапа
-
-# Позиція телепорту
-teleport_back = pygame.Rect(400, 300, TILE_SIZE, TILE_SIZE)
-
-# Блок телепорту назад в кафе
-teleport_back = pygame.image.load(dir_path + "/all_textures/portal.png")
-
 # Функція для зміни мапи на кафе
 def switch_to_cafe():
     global textures
     textures = cafe_textures
 
-# Функція для повернення на початкову мапу
+def switch_to_cafe():
+    global textures
+    textures = cafe_textures
+
 def switch_to_initial():
     global textures
     textures = initial_textures
 
-# Функція для телепортування в кафе
-def teleport_to_cafe():
-    global geroy
-    geroy.x = 65  # Початкова позиція
-    geroy.y = 65  # Початкова позиція
-
 bad = []
 good = []
+decoration = []
 
 # Генеруємо квадрати
-for y, row in enumerate(textures):
+for y, row in enumerate(initial_textures):
     for x, tile in enumerate(row):
         rect = pygame.Rect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE)
-        if tile in [3, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15]:
+        if tile in [3, 4, 5, 6, 7, 9, 10, 11, 12, 13, 15]:
             bad.append(rect)
         elif tile == 8:
             good.append(rect)
+        elif tile == 14:
+            decoration.append(rect)
 
+textures = initial_textures
 
 #-------------безкінечний цикл гри
 
@@ -119,10 +114,6 @@ def teleport_to_initial_position():
     global geroy
     geroy.x = 65  # Початкова позиція
     geroy.y = 65  # Початкова позиція
-
-# Завантажуємо зображення для телепорту назад
-teleport_back_image = pygame.image.load(dir_path + "/all_textures/portal.png")
-teleport_back_rect = pygame.Rect(400, 300, TILE_SIZE, TILE_SIZE)  # Координати блоку телепорту
 
 
 game = True
@@ -134,6 +125,9 @@ while game:
         for x, tile in enumerate(row):
             texture = pygame.transform.scale(textures_images[tile], (TILE_SIZE, TILE_SIZE))
             display.blit(texture, (x * TILE_SIZE, y * TILE_SIZE))
+
+    if textures == cafe_textures:
+        display.blit(portal_texture, (portal_rect.x, portal_rect.y))
 
     # Малюємо героя
     display.blit(hero, geroy)
@@ -195,12 +189,19 @@ while game:
                 break
 
     # Перевірка на хороші місця
-    for goo in good:
-        if geroy.colliderect(goo):
-            switch_to_cafe()  # Переходимо на новий рівень
+    # Перевірка на хороші місця (телепортер працює тільки на початковій мапі)
+    if textures == initial_textures:
+        for goo in good:
+            if geroy.colliderect(goo):
+                switch_to_cafe()  # Переходимо в кафе
+                geroy.x, geroy.y = 100, 100  # Початкова позиція героя в кафе
+
+    for dec in decoration:
+        if geroy.colliderect(dec):
+            pass
             
         # Перевірка телепорту назад
-    if geroy.colliderect(teleport_back_rect) and textures == cafe_textures:
+    if geroy.colliderect(portal_rect) and textures == cafe_textures:
         teleport_to_initial_position()  # Повертаємо героя на початкову позицію
         switch_to_initial()  # Повертаємо початкову мапу
 
@@ -213,15 +214,6 @@ while game:
             # Встановлюємо нового героя в точку на кафе (можна змінити координати)
             geroy.x = 200
             geroy.y = 200
-
-        # Якщо ми в кафе, перевіряємо блок телепорту
-        if textures == cafe_textures:  # Якщо ми в кафе
-            pygame.image.load(dir_path + "/all_textures/portal.png")
-
-        # Перевірка на попадання в кафе
-        for goo in good:
-            if geroy.colliderect(goo):
-                switch_to_cafe()  # Якщо доторкнулись до кафе, змінюємо мапу на кафе
 
     pygame.display.flip()
     clock.tick(60)
